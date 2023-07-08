@@ -2,59 +2,64 @@ import os
 import shutil
 import zipfile
 
-def rename_Machine():
+from pydantic import BaseModel, ValidationError, FilePath, DirectoryPath
 
-	videoPath = input('Drop the Video Directory: ')
-	if(videoPath[0] == videoPath[-1] == "\""):
-		videoPath = videoPath[1:-1]
 
-	# videoPath = "manual_path"
+class SubtitleRenameInput(BaseModel):
+    video_directory: DirectoryPath
+    subtitle_zip_file: FilePath
 
-	fname = {}
-	i = 0
-	for file in os.listdir(videoPath):
-		fname[i], fext = os.path.splitext(file)
-		if (fext == '.mkv' or fext == '.mp4' or fext == '.MP4'):
-			i+=1
+    @classmethod
+    def create_from_input(cls):
+        while True:
+            try:
+                video_directory = input('Enter the Video Directory: ')
+                subtitle_zip_file = input('Enter the Subtitle Zip File: ')
 
-	#Getting Script's Current Directory
-	current = os.getcwd()
-	subPath = input('Drop the Subtitle Zip File: ')
-	if(subPath[0] == subPath[-1] == "\""):
-		subPath = subPath[1:-1]
-	print(current)
+                return cls(
+                    video_directory=os.path.abspath(video_directory),
+                    subtitle_zip_file=os.path.abspath(subtitle_zip_file),
+                )
+            except ValidationError as e:
+                print(f"Input validation error: {e.errors()}")
 
-	# Creating a Folder Named "Files" in the Script's Current Directory.
-	if (os.path.exists(current+'\\Files') == False):
-		os.makedirs(current+'\\Files')
-	
-	with zipfile.ZipFile(subPath, 'r') as LocalObj:
-		# Extract all the contents of zip file in different directory
-		shutil.rmtree('Files', ignore_errors=True)
-		LocalObj.extractall('Files')
-		LocalObj.close()
-	i = 0
-	for file in os.listdir('Files'):
-		nFile = fname[i]+'.srt'
-		os.rename(os.path.join('Files', file), os.path.join('Files', nFile))
-		shutil.move('Files/'+nFile, videoPath+'/'+nFile)
-		i+=1
 
-	# After All rename and moving Deleting the Folder Named "Files" from the Script's Current Directory.
-	if os.path.exists(current+'\\Files'):
-		shutil.rmtree(current+'\\Files', ignore_errors=True)
-		
-	again = ' '
-	while (again == ' '):
-		again = input("\n\nRename Again (Y/N): ")
-		if((again == 'y') or (again == 'Y')):
-			print("\n-------------------------------------------\n\n")
-			rename_Machine()
-		elif((again == 'n') or (again == 'N')):
-			print("\nThanks for using!\n\n")
-		else:
-			print("Invalid Command! Please type either Y or N")
-			again = ' '
+def rename_machine(input_data):
+    video_path = input_data.video_directory
+    subtitle_zip_file = input_data.subtitle_zip_file
+
+    video_files = [
+        os.path.splitext(file)[0]
+        for file in os.listdir(video_path)
+        if os.path.isfile(os.path.join(video_path, file))
+        and os.path.splitext(file)[1].lower() in ('.mkv', '.mp4')
+    ]
+
+    files_directory = os.path.join(os.getcwd(), 'Files')
+    os.makedirs(files_directory, exist_ok=True)
+
+    with zipfile.ZipFile(subtitle_zip_file, 'r') as local_obj:
+        local_obj.extractall(files_directory)
+
+    for i, file in enumerate(os.listdir(files_directory)):
+        new_file_name = f'{video_files[i]}.srt'
+        old_file_path = os.path.join(files_directory, file)
+        new_file_path = os.path.join(video_path, new_file_name)
+        shutil.move(old_file_path, new_file_path)
+
+    shutil.rmtree(files_directory, ignore_errors=True)
+
+    return input("Rename Again (Y/N): ").lower()
+
+
+def main():
+    while True:
+        input_data = SubtitleRenameInput.create_from_input()
+        again = rename_machine(input_data)
+        if again != 'y':
+            print("\nThanks for using!\n")
+            break
+
 
 if __name__ == '__main__':
-	rename_Machine()
+    main()

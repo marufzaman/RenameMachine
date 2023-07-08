@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*.srt
+
+# Virtual Environment
+venv/
+env/
+
+# IDE-generated files and directories
+.idea/
+.vscode/
+*.pydevproject
+*.project
+*.bak
+*.swp
+*.swo
+*~
+
+# OS-generated files and directories
+.DS_Store
+Thumbs.db
+desktop.ini
+ehthumbs.db
+$RECYCLE.BIN/
+
+# User-specific files
+*.log
+*.cfg
+*.conf
+*.key
+*.pem
+
+# Ignore user-specific directories
+logs/
+secrets/
+credentials/

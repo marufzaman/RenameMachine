@@ -2,8 +2,6 @@
 
 <hr>
 
-![GitHub license](https://img.shields.io/github/license/marufzaman/RenameMachine?style=flat-square)
-
 Rename Machine is a Python script that allows you to rename subtitle files in bulk based on the corresponding video
 files in a directory.
 
